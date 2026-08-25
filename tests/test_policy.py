@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import pytest
 
-from core.domain.models import Channel, Customer, FailedPayment
-from core.domain.playbook import Action
-from core.policy.engine import AttemptState, PlannedAction, PolicyEngine
+from backend.domain.models import Channel, Customer, FailedPayment
+from backend.domain.actions import Action
+from backend.policy.engine import PolicyEngine
+from backend.policy.limits import AttemptState
+from backend.policy.plan import PlannedAction
 
 
 @pytest.fixture

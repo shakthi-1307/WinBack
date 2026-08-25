@@ -9,14 +9,15 @@ from __future__ import annotations
 
 import pytest
 
-from core.domain.models import Channel, Customer, FailedPayment
-from core.domain.playbook import Action
-from core.executor.executor import Executor, idempotency_key
-from core.executor.gateway import FakeGateway, GatewayError
-from core.ledger import events as ev
-from core.ledger.events import Ledger
-from core.ledger.replay import render
-from core.policy.engine import PlannedAction
+from backend.domain.models import Channel, Customer, FailedPayment
+from backend.domain.actions import Action
+from backend.executor.executor import Executor, idempotency_key
+from backend.executor.fake_gateway import FakeGateway
+from backend.executor.gateway_base import GatewayError
+from backend.ledger import event_types as ev
+from backend.ledger.store import Ledger
+from backend.ledger.replay import render
+from backend.policy.plan import PlannedAction
 
 SNAPSHOT = 149900
 

@@ -1,0 +1,75 @@
+/* Design tokens. Every colour in the app resolves through these.
+   Three theme states: explicit light, explicit dark, and the un-stamped
+   default where only prefers-color-scheme decides. */
+
+:root {
+  --ground: #eef1f1;
+  --surface: #ffffff;
+  --surface-2: #f7f9f9;
+  --ink: #15191b;
+  --ink-2: #33413f;
+  --muted: #5e6b70;
+  --rule: #d7dfdf;
+  --rule-strong: #b9c6c6;
+
+  --accent: #0d5c58;
+  --accent-ink: #094340;
+  --accent-soft: #dfeceb;
+
+  --good: #1c6f47;
+  --good-soft: #dcefe4;
+  --warn: #8f5a12;
+  --warn-soft: #f5e9d6;
+  --stop: #963129;
+  --stop-soft: #f6e2e0;
+
+  --shadow: 0 1px 2px rgba(16, 30, 32, .05), 0 8px 24px -12px rgba(16, 30, 32, .18);
+
+  --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --serif: "IBM Plex Serif", Georgia, serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0d1113;
+    --surface: #151b1d;
+    --surface-2: #1b2325;
+    --ink: #e3eaeb;
+    --ink-2: #c2d0d1;
+    --muted: #8b9b9f;
+    --rule: #263134;
+    --rule-strong: #3a494c;
+    --accent: #5ccfc3;
+    --accent-ink: #8fe0d7;
+    --accent-soft: #12302e;
+    --good: #5cba8b;
+    --good-soft: #14301f;
+    --warn: #d69f52;
+    --warn-soft: #322510;
+    --stop: #dd7f74;
+    --stop-soft: #351a17;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .6);
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #0d1113;
+  --surface: #151b1d;
+  --surface-2: #1b2325;
+  --ink: #e3eaeb;
+  --ink-2: #c2d0d1;
+  --muted: #8b9b9f;
+  --rule: #263134;
+  --rule-strong: #3a494c;
+  --accent: #5ccfc3;
+  --accent-ink: #8fe0d7;
+  --accent-soft: #12302e;
+  --good: #5cba8b;
+  --good-soft: #14301f;
+  --warn: #d69f52;
+  --warn-soft: #322510;
+  --stop: #dd7f74;
+  --stop-soft: #351a17;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .6);
+}

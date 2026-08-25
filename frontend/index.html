@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Winback — recovery console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@600&display=swap" />
+  <link rel="stylesheet" href="/styles/tokens.css" />
+  <link rel="stylesheet" href="/styles/layout.css" />
+  <link rel="stylesheet" href="/styles/components.css" />
+</head>
+<body>
+  <div class="shell">
+
+    <header class="masthead">
+      <div>
+        <p class="eyebrow">Razorpay Buildathon · Track 03</p>
+        <h1>Winback</h1>
+        <p class="subtitle">
+          Reads why a payment failed, decides the right intervention and the right
+          moment, and knows when to stop chasing.
+        </p>
+      </div>
+      <div class="controls" id="controls"></div>
+    </header>
+
+    <p class="clock" id="mode" style="align-self:flex-start">connecting…</p>
+
+    <section class="tiles" id="tiles"></section>
+
+    <div class="main-grid">
+      <div class="stack">
+
+        <section class="card">
+          <div class="card-head">
+            <h2>Recovery over time</h2>
+            <span class="hint">cumulative rupees, by simulated day</span>
+          </div>
+          <div class="card-body chart-wrap" id="chart"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>Transactions</h2>
+            <div class="controls" id="filters">
+              <button data-filter="all" class="primary">All</button>
+              <button data-filter="recovered">Recovered</button>
+              <button data-filter="in_flight">In flight</button>
+              <button data-filter="abandoned">Abandoned</button>
+              <button data-filter="blocked">Blocked</button>
+            </div>
+          </div>
+          <div id="table"></div>
+        </section>
+
+      </div>
+
+      <div class="stack">
+        <section class="card">
+          <div class="card-head">
+            <h2>Guardrails</h2>
+            <span class="hint">what was refused</span>
+          </div>
+          <div class="card-body" id="guardrails"></div>
+        </section>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="drawer-backdrop" id="drawer-backdrop"></div>
+  <aside class="drawer" id="drawer" aria-label="Transaction replay">
+    <div class="drawer-head">
+      <div>
+        <p class="eyebrow">Replay</p>
+        <h3 id="drawer-title"></h3>
+      </div>
+      <button id="drawer-close">Close</button>
+    </div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </aside>
+
+  <script type="module" src="/scripts/main.js"></script>
+</body>
+</html>

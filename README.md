@@ -35,7 +35,9 @@ none, because it read the reason code first.
 
 ```
 pip install -r requirements.txt
-python -m eval.harness
+./run.sh                                  # everything, in order
+
+uvicorn backend.api.app:app --reload      # the console, at localhost:8000
 ```
 
 ### What the model actually buys
@@ -72,7 +74,7 @@ chose. No strategy can get lucky relative to another.
 timing retries to payday, so:
 
 ```
-python -m eval.sensitivity
+python -m backend.evaluation.sensitivity
 ```
 
 | payday multiplier | retry ×3 | fixed D+1/3/5 | Winback |
@@ -99,7 +101,7 @@ Winback spends money and contacts people autonomously, so the question isn't "do
 work" but "what happens when someone tries to make it misbehave".
 
 ```
-python -m eval.attacks
+python -m backend.attacks.suite
 ```
 
 **Model layer.** Hostile text on a customer account. Each attack runs twice — once against
@@ -142,7 +144,7 @@ ignore the alarm. The first version of these detectors had a 3-in-9 false positi
 the suite caught it, and the patterns were narrowed.
 
 ```
-python -m pytest tests/          # 58 tests: every rule, every defence, exactly-once
+python -m pytest tests/          # 76 tests: every rule, every defence, exactly-once, the API
 ```
 
 ---
@@ -237,28 +239,68 @@ A payment fails. The bank returns a reason code.
 ## Layout
 
 ```
-sim/           the measuring instrument — FROZEN, outside the product
-  assumptions.yaml    every probability, with its justification
-  simulator.py        common random numbers; agent never imports this
-core/
-  domain/      reason codes, failure classes, the playbook
-  agents/      triage, investigator, injection defence, model seam
-  policy/      the limits. no model, no prompts, no judgement
-  scheduler/   virtual clock and the day-by-day campaign runner
-  executor/    exactly-once execution, Razorpay gateway seam
-  ledger/      append-only events, and replay
-data/          seeded synthetic batch generator
-eval/
-  strategies.py       three baselines, the rule tier, the full agent
-  harness.py          batch runner and scoring
-  sensitivity.py      does the result survive being wrong?
-  attacks.py          model-layer and policy-layer attack suite
-tests/         58 tests — every enforced rule, every defence
+simulation/              the measuring instrument — FROZEN, outside the product
+  assumptions.yaml       every probability, with its justification
+  loader.py              loading and fingerprinting
+  random_draw.py         common random numbers
+  simulator.py           the world's verdict on one attempt
+
+backend/
+  config/                env.py · secrets.py · status.py
+  domain/                failure_classes · reason_codes · classification
+                         actions · playbook · calendar · models
+  security/              attack_classes · detectors · screening · wrapping
+  llm/                   base · live_client · scripted_client · validation · factory
+  agents/                triage_agent.py · investigator_agent.py
+  policy/                limits.py · plan.py · rules.py · engine.py
+  scheduler/             clock.py · job_queue.py · campaign.py
+  executor/              idempotency · gateway_base · razorpay_gateway
+                         fake_gateway · gateway_factory · executor
+  ledger/                event_types.py · store.py · replay.py
+  strategies/            one file per strategy, plus registry.py
+  data/                  reason_mix · profiles · generator · summary
+  evaluation/            cost_model · result · scoring · reporting
+                         runner · harness · sensitivity
+  attacks/               model · policy · execution · false_positives · suite
+  api/                   app.py + one file per route group
+
+frontend/
+  index.html
+  styles/                tokens.css · layout.css · components.css
+  scripts/               api · format · state · main
+    components/          controls · stat-tiles · recovery-chart
+                         transaction-table · replay-drawer · guardrail-panel
+
+tests/                   76 tests
 ```
 
-`sim/` sits outside `core/` on purpose: it is not part of the product, it is the instrument
-the product is measured with. `policy/` sits outside `agents/` for the same kind of
-reason — guardrails are not something the agent participates in.
+**The structure makes the argument.** `simulation/` sits outside `backend/` because it is
+not part of the product — it is the instrument the product is measured with, and it is
+frozen. `policy/` sits outside `agents/` because guardrails are not something the agent
+participates in. `rules.py` has one function per limit, so no rule can be disabled by
+accident while editing another. A reviewer skimming the tree should be able to infer all
+three without opening a file.
+
+## The console
+
+```
+uvicorn backend.api.app:app --reload
+```
+
+One screen. Money still at risk, money recovered, what is in flight, and — given equal
+billing — how many charges were attempted that had a **0% chance of succeeding**.
+
+Press **Run campaign** and the days advance one at a time: the recovery line climbs, rows
+move from in-flight to recovered or abandoned. Click any transaction and the drawer shows
+its whole story rebuilt from the ledger, including the untrusted account note if it has one.
+
+The **Guardrails** panel sits alongside the money, because an agent that was stopped is
+more informative than one that succeeded. And there is a **kill switch** on the toolbar —
+an autonomous system that spends money and contacts people needs one an operator can
+reach without a deploy.
+
+No build step and no framework: ES modules and three stylesheets, served by the same
+FastAPI process. Clone, install, run.
 
 ---
 
@@ -269,7 +311,7 @@ A transaction's whole story is then reconstructed from those events alone — no
 afterwards, but read back in order.
 
 ```
-python -m eval.harness --replay
+python -m backend.evaluation.harness --replay
 ```
 
 ```
@@ -303,7 +345,7 @@ export WINBACK_MODEL=llama-3.1-8b-instant
 export RAZORPAY_KEY_ID=rzp_test_...   # real orders against Razorpay test mode
 export RAZORPAY_KEY_SECRET=...
 
-python -m eval.harness --replay
+python -m backend.evaluation.harness --replay
 ```
 
 Without a key, a deterministic scripted model is used so the harness, the tests and the
