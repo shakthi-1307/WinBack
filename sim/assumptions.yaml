@@ -1,0 +1,161 @@
+# ==========================================================================
+# WINBACK — OUTCOME ASSUMPTIONS
+#
+#   FROZEN. Do not edit after the first agent commit.
+#
+# This file is the measuring instrument, not part of the product. It encodes
+# how we believe the world behaves: given a failed payment and a recovery
+# action, how likely is that action to actually get the money?
+#
+# It was written and committed BEFORE any agent code existed, so that no
+# strategy could be tuned against it. The agent never reads this file.
+#
+# Every number is an assumption, not a measurement. They are stated here in
+# full so that anyone can disagree with them, change them, and re-run. The
+# comparison between strategies is the result; the absolute numbers are only
+# as good as these priors.
+# ==========================================================================
+
+version: 1
+frozen: true
+frozen_at: "2026-08-21"
+
+global:
+  # Each successive attempt on the same transaction is less likely to work.
+  # The easy wins happen first; what remains is progressively harder.
+  attempt_decay: 0.78
+
+  # Customers disengage over time. A recovery on day 20 is worth less than
+  # the same recovery on day 2, because the customer has mentally left.
+  staleness_decay_per_day: 0.015
+  max_staleness_days: 30
+
+  # No action is ever a certainty.
+  probability_ceiling: 0.95
+
+  # A retry that lands within this many days after payday counts as aligned.
+  payday_window_days: 3
+
+
+# --------------------------------------------------------------------------
+# Per failure class. Keys are actions from core.domain.playbook.Action.
+# An action absent from a class is treated as probability 0.
+# --------------------------------------------------------------------------
+classes:
+
+  transient_system:
+    # A machine was down. Outages are typically short, so a prompt retry
+    # catches the recovery window; a retry a day later still works but the
+    # customer's own session is long gone.
+    actions:
+      retry_now: 0.72
+      retry_scheduled: 0.55
+      reprompt: 0.50
+      offer_alternate_method: 0.60
+      nudge_fix_instrument: 0.08
+
+  timing:
+    # The customer has the money, just not right now. Frequency does almost
+    # nothing here; timing does almost everything. This gap is the single
+    # largest source of avoidable loss in naive retry schedules.
+    actions:
+      retry_now: 0.15
+      retry_scheduled: 0.15
+      reprompt: 0.20
+      offer_alternate_method: 0.22
+      nudge_fix_instrument: 0.18
+    modifiers:
+      payday_aligned: 3.60   # 0.15 -> 0.54
+
+  present_friction:
+    # The customer was actively paying and something got in the way. Intent
+    # is at its peak immediately and decays sharply within hours.
+    actions:
+      retry_now: 0.20
+      retry_scheduled: 0.12
+      reprompt: 0.48
+      offer_alternate_method: 0.34
+      nudge_fix_instrument: 0.15
+    modifiers:
+      same_day: 1.00
+      after_first_day: 0.45
+
+  customer_action_required:
+    # The instrument cannot work until the customer changes something.
+    # A charge attempt is not unlikely to succeed — it is IMPOSSIBLE.
+    # This zero is the most important number in the file.
+    actions:
+      retry_now: 0.00
+      retry_scheduled: 0.00
+      reprompt: 0.02
+      offer_alternate_method: 0.31
+      nudge_fix_instrument: 0.26
+
+  risk_blocked:
+    # The issuer flagged the transaction. Retrying the same instrument is
+    # near-hopeless AND carries an invisible cost: issuer trust in the
+    # merchant's whole account degrades, quietly reducing success rates for
+    # unrelated customers. Tracked as a side effect, not a probability.
+    actions:
+      retry_now: 0.06
+      retry_scheduled: 0.07
+      reprompt: 0.10
+      offer_alternate_method: 0.42
+      nudge_fix_instrument: 0.08
+    side_effects:
+      charge_attempt_damages_issuer_trust: true
+
+  intent_negative:
+    # The customer deliberately backed out. Pressure converts a soft no
+    # into a hard one, so even the successes here are partly pyrrhic.
+    actions:
+      retry_now: 0.08
+      retry_scheduled: 0.09
+      reprompt: 0.14
+      offer_alternate_method: 0.12
+      nudge_fix_instrument: 0.10
+
+  ambiguous:
+    # The bank declined and said nothing. A short wait outperforms an
+    # immediate retry because many generic declines are soft holds that
+    # clear on their own.
+    actions:
+      retry_now: 0.18
+      retry_scheduled: 0.32
+      reprompt: 0.26
+      offer_alternate_method: 0.30
+      nudge_fix_instrument: 0.14
+
+
+# --------------------------------------------------------------------------
+# Per reason code, where a specific code behaves differently from its class.
+# --------------------------------------------------------------------------
+code_overrides:
+
+  transaction_limit_exceeded:
+    # Daily caps reset overnight, so a next-day retry is genuinely strong —
+    # unlike its classmate insufficient_funds, where waiting a day does
+    # almost nothing. Same class, opposite dynamics.
+    actions:
+      retry_scheduled: 0.60
+    ignore_modifiers: ["payday_aligned"]
+
+  incorrect_cvv:
+    # A silent retry replays the same wrong CVV. Only asking the customer
+    # again can fix it.
+    actions:
+      retry_now: 0.05
+      retry_scheduled: 0.04
+
+  card_expired:
+    # Absolute. No timing, no channel, no number of attempts changes this.
+    actions:
+      retry_now: 0.00
+      retry_scheduled: 0.00
+      reprompt: 0.00
+
+  debit_instrument_blocked:
+    # A blocked card usually means a bank-side problem the customer must
+    # resolve in person or by phone — slower than a simple re-enable.
+    actions:
+      nudge_fix_instrument: 0.17
