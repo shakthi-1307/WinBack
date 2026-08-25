@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 
 from backend.config.env import ENV_PATH, ensure_loaded
+from backend.config.mode import fake_gateway_permitted
 from backend.config.secrets import mask
 
 KNOWN_KEYS = {
@@ -42,7 +43,17 @@ def status() -> str:
     )
     lines.append(
         "  gateway   LIVE Razorpay test mode (creates real test orders)" if gateway_is_live()
-        else "  gateway   OFFLINE fake gateway — deterministic, no key needed"
+        else ("  gateway   TEST DOUBLE — permitted by WINBACK_ALLOW_FAKE_GATEWAY"
+              if fake_gateway_permitted()
+              else "  gateway   NOT CONFIGURED — runs are REFUSED, never faked")
+    )
+    lines.append("")
+    lines.append(
+        "  Strict mode: without Razorpay test credentials a run is refused,\n"
+        "  not quietly substituted."
+        if not fake_gateway_permitted() else
+        "  WARNING: a gateway test double is permitted in this shell. That is for\n"
+        "  the test suite only — a normal run should never see it."
     )
     return "\n".join(lines)
 

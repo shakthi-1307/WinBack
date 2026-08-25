@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.api.routes import campaign, guardrails, metrics, transactions
+from backend.config.mode import fake_gateway_permitted, razorpay_configured
 from backend.config.status import gateway_is_live, model_is_live
 
 FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
@@ -37,7 +38,9 @@ def health() -> dict:
     return {
         "ok": True,
         "model": "live" if model_is_live() else "offline scripted stand-in",
-        "gateway": "live razorpay test mode" if gateway_is_live() else "offline fake gateway",
+        "gateway": "live razorpay test mode" if gateway_is_live() else "test double",
+        "gateway_is_real": razorpay_configured(),
+        "strict": not fake_gateway_permitted(),
     }
 
 

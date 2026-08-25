@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import copy
 
+from backend.config.mode import require_razorpay
 from backend.data.generator import generate
 from backend.evaluation.runner import run_campaign
 from backend.evaluation.scoring import score
@@ -29,6 +30,7 @@ FROZEN_VALUE = 3.6
 
 
 def main() -> None:
+    require_razorpay()
     customers_list, payments = generate()
     customers = {c.id: c for c in customers_list}
     contenders = all_strategies()[1:]
@@ -82,4 +84,12 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    from backend.config.mode import CredentialsMissing
+
+    try:
+        main()
+    except CredentialsMissing as error:
+        print(error)
+        sys.exit(1)

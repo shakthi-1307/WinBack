@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import sys
 
+from backend.config.mode import require_razorpay
 from backend.data.generator import generate
 from backend.data.summary import summarise
+from backend.evaluation.provenance import report as provenance_report
 from backend.evaluation.reporting import comparison_table, detail, intelligence_budget
 from backend.evaluation.runner import run_campaign
 from backend.evaluation.scoring import score
@@ -27,6 +29,7 @@ SAMPLE_EVENT_TYPES = (ev.RECOVERED, ev.BLOCKED, ev.GATEWAY_ERROR, ev.ABANDONED)
 
 
 def main() -> None:
+    require_razorpay()
     show_replay = "--replay" in sys.argv
     customers_list, payments = generate()
     customers = {c.id: c for c in customers_list}
@@ -76,6 +79,8 @@ def main() -> None:
     print(f"  duplicates suppressed    {campaign.executor.duplicate_suppressions:>4}")
     print(f"  distinct idempotency keys{len(campaign.executor.seen):>5}")
     print()
+    print(provenance_report(campaign.executor))
+    print()
 
     ledger = ledgers[last]
     print(f"ledger ({last}): {ledger.total()} events, append-only")
@@ -102,4 +107,12 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    from backend.config.mode import CredentialsMissing
+
+    try:
+        main()
+    except CredentialsMissing as error:
+        print(error)
+        sys.exit(1)

@@ -86,6 +86,7 @@ class RazorpayGateway:
             order_id=order_id,
             payment_ref=order.get("payment_id", UNAVAILABLE),
             accepted=True,
+            live=True,
             raw=order,
         )
 

@@ -180,6 +180,7 @@ class Campaign:
             order_id=result.gateway.order_id if result.gateway else None,
             payment_ref=result.gateway.payment_ref if result.gateway else None,
             gateway_accepted=bool(result.gateway),
+            gateway_live=bool(result.gateway and result.gateway.live),
             success=outcome.success,
             probability=outcome.probability,
             why=outcome.explanation,

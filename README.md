@@ -35,10 +35,20 @@ none, because it read the reason code first.
 
 ```
 pip install -r requirements.txt
+cp .env.example .env                      # add your Razorpay TEST keys
+python -m backend.config                  # must read: gateway LIVE
 ./run.sh                                  # everything, in order
 
 uvicorn backend.api.app:app --reload      # the console, at localhost:8000
 ```
+
+**Strict by default: without Razorpay test credentials, a run is refused.** There is no
+pretend mode that produces numbers anyway. A payments system that silently degrades to a
+substitute is worse than one that stops, because the output looks identical either way.
+
+The test suite is the single exception — `tests/conftest.py` sets
+`WINBACK_ALLOW_FAKE_GATEWAY=1` so unit tests do not need network access or credentials.
+That permission is granted in one visible place and nowhere else.
 
 ### What the model actually buys
 
@@ -57,7 +67,40 @@ instrument is how simulated results become meaningless.
 
 ---
 
-## Is this result real, or did I write a world my agent wins in?
+## What is real, and what is modelled
+
+Two claims, and they are never allowed to blur. Every run prints the split:
+
+```
+provenance of this run
+  gateway calls        243 of 243 REAL (live Razorpay test mode)
+  bank approval        MODELLED by the frozen simulator
+                       (no sandbox can say whether a real customer would have paid)
+```
+
+**Real:** every gateway call is a live request to Razorpay test mode. Real authentication,
+real order IDs, real amounts in paise, real idempotency headers, real error handling. If
+credentials are missing the run is refused rather than substituted.
+
+**Modelled:** whether a customer's bank would have approved. This *cannot* be real, and no
+sandbox can make it so — there are 400 synthetic customers and none of them has a bank
+account. Razorpay test mode returns whatever outcome you configure it to return, so using
+it as the verdict would be *more* dishonest, not less: it would look like reality while
+still being a number I chose.
+
+So the verdict comes from a probability model that was frozen before any strategy existed
+and is published in full. Each attempt records both answers separately, and the replay
+shows them side by side:
+
+```
+→ day 12  retry_scheduled  order order_NxK2mP8Qw1  api ok (razorpay)  bank declined
+```
+
+The integration worked. The customer still would not have paid. Two facts, two columns.
+
+---
+
+## Is the modelled half fair, or did I write a world my agent wins in?
 
 The most important question to ask about any simulated result.
 

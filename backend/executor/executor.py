@@ -49,6 +49,8 @@ class Executor:
     seen: dict[str, ExecutionResult] = field(default_factory=dict)
     gateway_errors: int = 0
     duplicate_suppressions: int = 0
+    live_gateway_calls: int = 0
+    substituted_gateway_calls: int = 0
 
     def execute(self, plan: PlannedAction, payment: FailedPayment,
                 customer: Customer, attempt_index: int, failure_class: str,
@@ -79,6 +81,11 @@ class Executor:
                 self.gateway_errors += 1
                 return ExecutionResult(key=key, executed=False, replayed=False,
                                        error=str(error))
+            else:
+                if gateway_result.live:
+                    self.live_gateway_calls += 1
+                else:
+                    self.substituted_gateway_calls += 1
 
         outcome = resolve(AttemptContext(
             txn_id=payment.id,

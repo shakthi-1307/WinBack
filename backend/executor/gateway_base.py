@@ -26,6 +26,12 @@ class GatewayResult:
     payment_ref: str
     accepted: bool
     """Whether the GATEWAY accepted the request. Not whether the customer paid."""
+
+    live: bool
+    """True when this came from a real Razorpay API call. Recorded on every
+    attempt and reported per run, so a reader never has to take the word
+    "real" on trust — the count is in the output."""
+
     raw: dict
 
 

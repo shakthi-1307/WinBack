@@ -48,7 +48,11 @@ def describe(event: dict) -> str:
         parts = [str(event.get("action"))]
         if event.get("order_id"):
             parts.append(f"order {event['order_id']}")
-        parts.append("api ok" if event.get("gateway_accepted") else "no gateway call")
+        if event.get("gateway_accepted"):
+            parts.append("api ok (razorpay)" if event.get("gateway_live")
+                         else "api ok (test double)")
+        else:
+            parts.append("no gateway call")
         parts.append("bank approved" if event.get("success") else "bank declined")
         parts.append(f"p={event.get('probability')}")
         return "  ".join(parts)

@@ -74,4 +74,12 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    from backend.config.mode import CredentialsMissing
+
+    try:
+        main()
+    except CredentialsMissing as error:
+        print(error)
+        sys.exit(1)

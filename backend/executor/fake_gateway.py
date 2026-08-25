@@ -36,5 +36,6 @@ class FakeGateway:
             order_id=f"order_TEST{digest[:14].upper()}",
             payment_ref=f"pay_TEST{digest[14:28].upper()}",
             accepted=True,
+            live=False,
             raw={"mode": "offline", "amount": amount_paise},
         )
