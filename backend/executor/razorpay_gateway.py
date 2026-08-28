@@ -43,23 +43,40 @@ class RazorpayGateway:
                 "real orders for real customers. Use a test key (rzp_test_...)."
             )
 
+    def fetch_order(self, order_id: str) -> dict:
+        """Read an order back from Razorpay.
+
+        Turns "we sent something" into "we sent it and Razorpay agrees what it
+        was". A wrong-units bug — rupees where paise belong — passes order
+        creation happily and only shows up here.
+        """
+        return self._request("GET", f"/orders/{order_id}", None, "")
+
     def _post(self, path: str, body: dict, idempotency_key: str) -> dict:
+        return self._request("POST", path, body, idempotency_key)
+
+    def _request(self, method: str, path: str, body: dict | None,
+                 idempotency_key: str) -> dict:
         import base64
         import urllib.error
         import urllib.request
 
         auth = base64.b64encode(f"{self.key_id}:{self.key_secret}".encode()).decode()
+        headers = {
+            "Authorization": f"Basic {auth}",
+            "Content-Type": "application/json",
+        }
+        if idempotency_key:
+            # Razorpay honours this on supported endpoints. We also keep our own
+            # store, because trusting a single layer with duplicate suppression
+            # is how double charges happen.
+            headers["X-Razorpay-Idempotency-Key"] = idempotency_key
+
         request = urllib.request.Request(
             f"{BASE_URL}{path}",
-            data=json.dumps(body).encode(),
-            headers={
-                "Authorization": f"Basic {auth}",
-                "Content-Type": "application/json",
-                # Razorpay honours this on supported endpoints. We also keep
-                # our own store, because trusting a single layer with
-                # duplicate suppression is how double charges happen.
-                "X-Razorpay-Idempotency-Key": idempotency_key,
-            },
+            data=json.dumps(body).encode() if body is not None else None,
+            headers=headers,
+            method=method,
         )
         try:
             with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:

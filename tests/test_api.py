@@ -18,7 +18,7 @@ def client():
 def test_health_reports_which_mode_is_active(client):
     body = client.get("/api/health").json()
     assert body["ok"] is True
-    assert "model" in body and "gateway" in body
+    assert "model" in body and "gateway_configured" in body
 
 
 def test_a_finished_campaign_matches_the_harness(client):
@@ -83,3 +83,59 @@ def test_the_console_is_served(client):
     assert client.get("/").status_code == 200
     assert client.get("/styles/tokens.css").status_code == 200
     assert client.get("/scripts/main.js").status_code == 200
+
+
+def test_the_console_reports_the_gateway_it_actually_used(client):
+    """The header must describe measured reality, not configuration.
+
+    A console that says "live razorpay" while its attempts went to a transport
+    double is exactly the overstatement this project claims is impossible.
+    """
+    client.post("/api/campaign/reset", json={"strategy": "winback_agent",
+                                             "live_sample": 0})
+    client.post("/api/campaign/run")
+    status = client.get("/api/campaign/status").json()
+
+    assert status["live_gateway_calls"] == 0
+    assert status["doubled_gateway_calls"] > 0
+    assert status["gateway_in_use"] == "transport double"
+
+
+def test_health_reports_configuration_not_usage(client):
+    """/api/health says what is CONFIGURED. Only campaign status says what was
+    used — the two must not be confusable."""
+    body = client.get("/api/health").json()
+    assert "gateway_configured" in body
+    assert "gateway" not in body, "the ambiguous key must be gone"
+
+
+def test_the_calendar_shows_when_the_agent_acted(client):
+    client.post("/api/campaign/reset", json={"strategy": "winback_agent"})
+    client.post("/api/campaign/run")
+    body = client.get("/api/metrics/calendar").json()
+
+    assert len(body["days"]) == 30
+    assert body["payday_dates"], "customers must have paydays"
+    assert all(body["days"][d - 1]["is_payday"] for d in body["payday_dates"])
+    assert sum(c["charges"] for c in body["days"]) == body["charges_total"]
+
+
+def test_winback_aims_at_paydays_and_the_baseline_does_not(client):
+    """The timing thesis, as a number.
+
+    On insufficient-funds failures WHEN you retry is the only lever there is.
+    Paydays plus their windows cover 13 of 30 days, so a strategy that ignores
+    timing lands about 43% of its retries there by chance. Winback should be
+    far above that; retry-x3 should be at chance.
+    """
+    client.post("/api/campaign/reset", json={"strategy": "retry_x3_immediate"})
+    client.post("/api/campaign/run")
+    baseline = client.get("/api/metrics/calendar").json()["timing_payday_targeting"]
+
+    client.post("/api/campaign/reset", json={"strategy": "winback_agent"})
+    client.post("/api/campaign/run")
+    winback = client.get("/api/metrics/calendar").json()["timing_payday_targeting"]
+
+    assert baseline < 0.55, "the baseline should be near chance"
+    assert winback > 0.75, "winback should deliberately aim at paydays"
+    assert winback - baseline > 0.25

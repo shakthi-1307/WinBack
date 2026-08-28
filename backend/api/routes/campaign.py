@@ -14,6 +14,9 @@ router = APIRouter(prefix="/api/campaign", tags=["campaign"])
 class ResetRequest(BaseModel):
     strategy: str | None = None
     size: int | None = None
+    live_sample: int | None = None
+    """0 = no network. n = the first n charges hit the real Razorpay API.
+    -1 = every charge does, slowly."""
 
 
 def _snapshot() -> dict:
@@ -26,6 +29,12 @@ def _snapshot() -> dict:
         "strategy": STATE.strategy_name,
         "size": STATE.size,
         "pending_jobs": campaign.queue.pending(),
+        # What is ACTUALLY in use, measured from the executor — never what is
+        # merely configured. The console header shows this verbatim.
+        "gateway_in_use": STATE.gateway_in_use(),
+        "live_sample": STATE.live_sample,
+        "live_gateway_calls": campaign.executor.live_gateway_calls,
+        "doubled_gateway_calls": campaign.executor.substituted_gateway_calls,
     }
 
 
@@ -44,7 +53,8 @@ def reset(request: ResetRequest) -> dict:
     from backend.config.mode import CredentialsMissing
 
     try:
-        STATE.reset(strategy_name=request.strategy, size=request.size)
+        STATE.reset(strategy_name=request.strategy, size=request.size,
+                    live_sample=request.live_sample)
     except CredentialsMissing as error:
         # A missing credential is a configuration problem with a clear fix, not
         # an internal error. Say so, with the instructions attached.

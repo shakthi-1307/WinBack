@@ -125,7 +125,7 @@ The integration worked. The customer still would not have paid. Two facts, two c
 The most important question to ask about any simulated result.
 
 **The simulator was written and frozen before any strategy code existed.** Its full
-probability table lives in [`sim/assumptions.yaml`](sim/assumptions.yaml), commented, with
+probability table lives in [`simulation/assumptions.yaml`](simulation/assumptions.yaml), commented, with
 the reasoning behind every number. It is git-tagged `simulator-frozen-v1`.
 
 **Every strategy is judged with common random numbers.** The random draw for a given
@@ -309,8 +309,8 @@ A payment fails. The bank returns a reason code.
 
 1. **Triage** works out what *kind* of problem it is. Naming it, not fixing it.
 2. **The policy layer** picks an action *and a date* from the
-   [playbook](core/domain/playbook.py). One of the actions it can pick is to give up.
-3. **The policy engine** ([`core/policy/engine.py`](core/policy/engine.py)) approves or
+   [playbook](backend/domain/playbook.py). One of the actions it can pick is to give up.
+3. **The policy engine** ([`backend/policy/engine.py`](backend/policy/engine.py)) approves or
    denies. No model, no judgement — a checklist. A denial costs zero API calls and zero
    rupees because it happens before anything executes.
 4. **The executor** carries out approved actions only.

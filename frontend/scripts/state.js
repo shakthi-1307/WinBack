@@ -8,6 +8,7 @@ const state = {
   series: [],
   transactions: [],
   guardrails: null,
+  calendar: null,
   selected: null,
   replay: null,
   filter: null,

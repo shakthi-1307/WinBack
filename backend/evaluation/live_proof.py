@@ -62,6 +62,7 @@ def main() -> int:
     print()
 
     succeeded = 0
+    mismatches = 0
     started = time.perf_counter()
 
     for payment in chargeable:
@@ -91,20 +92,45 @@ def main() -> int:
             continue
 
         gateway = result.gateway
+
+        # Creating an order proves we sent something. Reading it back proves
+        # Razorpay agrees what we sent. A wrong-units bug — rupees where paise
+        # belong — survives creation happily and dies right here.
+        try:
+            fetched = executor.gateway.fetch_order(gateway.order_id)
+            checks = {
+                "amount": fetched.get("amount") == payment.amount_paise,
+                "currency": fetched.get("currency") == "INR",
+                "receipt": fetched.get("receipt") == payment.id[:40],
+            }
+            if all(checks.values()):
+                verified = "verified"
+            else:
+                failed = ", ".join(k for k, ok in checks.items() if not ok)
+                verified = f"MISMATCH on {failed} (got amount={fetched.get('amount')})"
+                mismatches += 1
+        except GatewayError as error:
+            verified = f"fetch failed: {error}"
+            mismatches += 1
+
         print(f"  {payment.id}  Rs {payment.amount_rupees:>7,.0f}  "
-              f"{gateway.order_id}  live={gateway.live}")
+              f"{gateway.order_id}  {verified}")
         succeeded += 1
 
     elapsed = time.perf_counter() - started
     print()
     print(f"  {succeeded} of {len(chargeable)} real orders created in {elapsed:.1f}s")
+    print(f"  read back and verified: {succeeded - mismatches} of {succeeded} "
+          "(amount in paise, currency, receipt)")
+    if mismatches:
+        print("  MISMATCHES FOUND — the order Razorpay stored is not the one we meant")
     print()
     print("Note: creating the order is server-side and fully real. AUTHORISING")
     print("the payment needs either a client-side checkout or a saved token on")
     print("a registered mandate, which depends on how the sandbox account is")
     print("provisioned. Where that is unavailable it is recorded as unavailable")
     print("rather than faked.")
-    return 0 if succeeded else 1
+    return 0 if succeeded and not mismatches else 1
 
 
 if __name__ == "__main__":

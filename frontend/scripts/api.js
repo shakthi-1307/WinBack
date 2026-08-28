@@ -25,6 +25,7 @@ export const api = {
   kill: () => request("/api/campaign/kill", { method: "POST" }),
   metrics: () => request("/api/metrics"),
   timeseries: () => request("/api/metrics/timeseries"),
+  calendar: () => request("/api/metrics/calendar"),
   transactions: (status) =>
     request(`/api/transactions${status ? `?status=${status}` : ""}`),
   replay: (id) => request(`/api/transactions/${id}`),

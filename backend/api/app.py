@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend.api.routes import campaign, guardrails, metrics, transactions
+from backend.api.routes import calendar, campaign, guardrails, metrics, transactions
 from backend.config.mode import fake_gateway_permitted, razorpay_configured
 from backend.config.status import gateway_is_live, model_is_live
 
@@ -30,6 +30,7 @@ app.add_middleware(
 app.include_router(campaign.router)
 app.include_router(transactions.router)
 app.include_router(metrics.router)
+app.include_router(calendar.router)
 app.include_router(guardrails.router)
 
 
@@ -38,7 +39,9 @@ def health() -> dict:
     return {
         "ok": True,
         "model": "live" if model_is_live() else "offline scripted stand-in",
-        "gateway": "live razorpay test mode" if gateway_is_live() else "test double",
+        # CONFIGURED, not in use. What a given run actually used is reported by
+        # /api/campaign/status, measured from the executor.
+        "gateway_configured": "razorpay test mode" if gateway_is_live() else "not configured",
         "gateway_is_real": razorpay_configured(),
         "strict": not fake_gateway_permitted(),
         "model_check": "run: python -m backend.llm.check",

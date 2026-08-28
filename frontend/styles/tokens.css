@@ -1,75 +1,75 @@
-/* Design tokens. Every colour in the app resolves through these.
-   Three theme states: explicit light, explicit dark, and the un-stamped
-   default where only prefers-color-scheme decides. */
+/* ==========================================================================
+   Winback console — design tokens.
+
+   A committed light identity. No prefers-color-scheme, no theme stamping:
+   this console looks the same on every machine, which is what you want from
+   something you are going to film.
+
+   The palette does four jobs and keeps them apart:
+
+     ground/ink   a pale sky paper and a deep navy, so nothing is pure grey
+     primary      one teal, used for actions and for volume
+     status       four soft tints — mint, peach, sky, rose — each owning one
+                  idea and never borrowed for another
+     shadow       tinted toward the primary, not black, so cards feel warm
+
+   Colour is carried mostly by very light tints on white cards. That is what
+   makes it read as colourful and still calm: saturation lives in small
+   areas, never in large ones.
+   ========================================================================== */
 
 :root {
-  --ground: #eef1f1;
+  color-scheme: light;
+
+  /* --- paper and ink ------------------------------------------------ */
+  --ground: #eef3f8;
+  --ground-deep: #e4ecf4;
   --surface: #ffffff;
-  --surface-2: #f7f9f9;
-  --ink: #15191b;
-  --ink-2: #33413f;
-  --muted: #5e6b70;
-  --rule: #d7dfdf;
-  --rule-strong: #b9c6c6;
+  --surface-2: #f7fafc;
+  --ink: #16223a;
+  --ink-2: #3c4a66;
+  --muted: #6e7c96;
+  --faint: #9aa6bd;
+  --rule: #e0e8f1;
+  --rule-strong: #c6d3e3;
 
-  --accent: #0d5c58;
-  --accent-ink: #094340;
-  --accent-soft: #dfeceb;
+  /* --- primary ------------------------------------------------------ */
+  --accent: #0f7b8a;
+  --accent-deep: #0a5b66;
+  --accent-ink: #0a5b66;
+  --accent-soft: #dff1f3;
+  --accent-line: #9ed3da;
 
-  --good: #1c6f47;
-  --good-soft: #dcefe4;
-  --warn: #8f5a12;
-  --warn-soft: #f5e9d6;
-  --stop: #963129;
-  --stop-soft: #f6e2e0;
+  /* --- status: one idea each ---------------------------------------- */
+  --good: #12876a;
+  --good-soft: #ddf2ea;
+  --good-line: #9bd8c4;
 
-  --shadow: 0 1px 2px rgba(16, 30, 32, .05), 0 8px 24px -12px rgba(16, 30, 32, .18);
+  --warn: #b4650f;
+  --warn-soft: #fdeedb;
+  --warn-line: #f0c894;
 
-  --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --serif: "IBM Plex Serif", Georgia, serif;
-}
+  --info: #3560c9;
+  --info-soft: #e4ebfd;
+  --info-line: #b3c5f4;
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --ground: #0d1113;
-    --surface: #151b1d;
-    --surface-2: #1b2325;
-    --ink: #e3eaeb;
-    --ink-2: #c2d0d1;
-    --muted: #8b9b9f;
-    --rule: #263134;
-    --rule-strong: #3a494c;
-    --accent: #5ccfc3;
-    --accent-ink: #8fe0d7;
-    --accent-soft: #12302e;
-    --good: #5cba8b;
-    --good-soft: #14301f;
-    --warn: #d69f52;
-    --warn-soft: #322510;
-    --stop: #dd7f74;
-    --stop-soft: #351a17;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .6);
-  }
-}
+  --stop: #bc3f66;
+  --stop-soft: #fce3ec;
+  --stop-line: #f2b3c8;
 
-:root[data-theme="dark"] {
-  --ground: #0d1113;
-  --surface: #151b1d;
-  --surface-2: #1b2325;
-  --ink: #e3eaeb;
-  --ink-2: #c2d0d1;
-  --muted: #8b9b9f;
-  --rule: #263134;
-  --rule-strong: #3a494c;
-  --accent: #5ccfc3;
-  --accent-ink: #8fe0d7;
-  --accent-soft: #12302e;
-  --good: #5cba8b;
-  --good-soft: #14301f;
-  --warn: #d69f52;
-  --warn-soft: #322510;
-  --stop: #dd7f74;
-  --stop-soft: #351a17;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .6);
+  /* --- depth: tinted, never grey ------------------------------------ */
+  --shadow-sm: 0 1px 2px rgba(22, 34, 58, .05);
+  --shadow: 0 1px 2px rgba(22, 34, 58, .05), 0 10px 28px -14px rgba(15, 123, 138, .32);
+  --shadow-lg: 0 2px 6px rgba(22, 34, 58, .07), 0 26px 56px -24px rgba(15, 123, 138, .42);
+
+  /* --- type --------------------------------------------------------- */
+  --display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --sans: "Figtree", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* --- shape: deliberately varied, not one radius everywhere -------- */
+  --r-card: 14px;
+  --r-control: 9px;
+  --r-cell: 7px;
+  --r-pill: 999px;
 }
