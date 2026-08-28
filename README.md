@@ -35,20 +35,40 @@ none, because it read the reason code first.
 
 ```
 pip install -r requirements.txt
+./run.sh                                  # measurement: ~1 second, no network
+
 cp .env.example .env                      # add your Razorpay TEST keys
-python -m backend.config                  # must read: gateway LIVE
-./run.sh                                  # everything, in order
+python -m backend.evaluation.live_proof   # real orders, real IDs
 
 uvicorn backend.api.app:app --reload      # the console, at localhost:8000
 ```
 
-**Strict by default: without Razorpay test credentials, a run is refused.** There is no
-pretend mode that produces numbers anyway. A payments system that silently degrades to a
-substitute is worse than one that stops, because the output looks identical either way.
+### Two questions, two commands
 
-The test suite is the single exception — `tests/conftest.py` sets
-`WINBACK_ALLOW_FAKE_GATEWAY=1` so unit tests do not need network access or credentials.
-That permission is granted in one visible place and nowhere else.
+The rule here is not *"everything must hit the network"*. It is **nothing is ever silently
+substituted**.
+
+| | question | command | why |
+|---|---|---|---|
+| **Integration** | does the executor really talk to Razorpay? | `live_proof` | Fifty real calls prove it as well as two thousand |
+| **Measurement** | which strategy decides better? | `harness` | Has nothing to do with transport |
+
+The four strategies together attempt ~2,350 charges. Routing every one through Razorpay
+means thousands of serial HTTPS round trips: ten minutes of wall clock, a hammered sandbox,
+and no information the first fifty calls did not already give. So the measurement run makes
+no network calls by default and **says so, unmissably**:
+
+```
+provenance of this run
+  gateway calls        243 via transport double, 0 live
+                       (measurement run — decision quality does not depend on
+                       transport. Prove the integration with: live_proof)
+```
+
+Mix them if you want: `--live 25` makes the first 25 charges real, the rest doubled, and
+reports the split. `--live all` makes every call real, slowly. Whatever you choose, every
+individual attempt records which kind it was — a run can never imply more real integration
+than it performed.
 
 ### What the model actually buys
 
@@ -135,6 +155,33 @@ from not spending money on attempts that cannot succeed.
 Runs are reproducible: the batch is seeded, the assumptions file is fingerprinted
 (`cadb0a3b1fa80739`) and printed with every result set, and running the harness twice
 produces byte-identical output.
+
+---
+
+## The model is optional, on purpose
+
+A model provider having a bad afternoon must not stop a merchant recovering money.
+
+`LiveClient` never raises. A 403, a timeout, malformed JSON — each is recorded, the
+validation layer substitutes the conservative default, and that transaction is decided by
+rules instead. After three consecutive failures the circuit opens and no further calls are
+attempted, because 400 doomed HTTP requests help nobody.
+
+The run then says so rather than hiding it:
+
+```
+winback_agent — intelligence budget
+  decided by lookup table   325 (81% of transactions, zero model cost)
+  escalated to the model     75 (19%)
+  MODEL FAILURES             75   (these decisions fell back to the rule tier)
+  circuit                  OPEN — model calls stopped for this run
+  last error               HTTP 403 from https://api.groq.com/openai/v1: ...
+```
+
+This is only survivable because of the tiering. The lookup table decides four fifths of
+every batch and the rule tier is a complete strategy on its own, so losing the model costs
+about a percent of recovery — not the run. `python -m backend.llm.check` diagnoses the
+endpoint before a campaign depends on it.
 
 ---
 

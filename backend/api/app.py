@@ -41,6 +41,7 @@ def health() -> dict:
         "gateway": "live razorpay test mode" if gateway_is_live() else "test double",
         "gateway_is_real": razorpay_configured(),
         "strict": not fake_gateway_permitted(),
+        "model_check": "run: python -m backend.llm.check",
     }
 
 

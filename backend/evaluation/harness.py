@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import sys
 
-from backend.config.mode import require_razorpay
 from backend.data.generator import generate
 from backend.data.summary import summarise
 from backend.evaluation.provenance import report as provenance_report
@@ -28,9 +27,17 @@ from simulation.loader import assumptions_fingerprint
 SAMPLE_EVENT_TYPES = (ev.RECOVERED, ev.BLOCKED, ev.GATEWAY_ERROR, ev.ABANDONED)
 
 
+def _live_sample_from_argv() -> int:
+    """--live 0 (default) | --live N | --live all"""
+    if "--live" not in sys.argv:
+        return 0
+    value = sys.argv[sys.argv.index("--live") + 1]
+    return -1 if value == "all" else int(value)
+
+
 def main() -> None:
-    require_razorpay()
     show_replay = "--replay" in sys.argv
+    live_sample = _live_sample_from_argv()
     customers_list, payments = generate()
     customers = {c.id: c for c in customers_list}
     strategies = all_strategies()
@@ -48,7 +55,8 @@ def main() -> None:
     results, campaigns, ledgers = [], {}, {}
     for strategy in strategies:
         ledger = Ledger(run_id=f"run_{strategy.name}", strategy=strategy.name)
-        traces, campaign = run_campaign(strategy, payments, customers, ledger)
+        traces, campaign = run_campaign(strategy, payments, customers, ledger,
+                                        live_sample=live_sample)
         results.append(score(strategy.name, payments, traces))
         campaigns[strategy.name] = campaign
         ledgers[strategy.name] = ledger

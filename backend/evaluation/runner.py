@@ -9,13 +9,14 @@ from backend.policy.engine import PolicyEngine
 from backend.scheduler.campaign import Campaign
 
 
-def run_campaign(strategy, payments, customers, ledger: Ledger | None = None):
+def run_campaign(strategy, payments, customers, ledger: Ledger | None = None,
+                 live_sample: int = 0):
     campaign = Campaign(
         strategy=strategy,
         payments=payments,
         customers=customers,
         policy=PolicyEngine(),
-        executor=Executor(gateway=default_gateway()),
+        executor=Executor(gateway=default_gateway(live_sample)),
         ledger=ledger,
     )
     return campaign.run(), campaign

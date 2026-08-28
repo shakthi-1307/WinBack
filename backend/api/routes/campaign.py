@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from backend.api.state import STATE
@@ -41,7 +41,14 @@ def strategies() -> dict:
 
 @router.post("/reset")
 def reset(request: ResetRequest) -> dict:
-    STATE.reset(strategy_name=request.strategy, size=request.size)
+    from backend.config.mode import CredentialsMissing
+
+    try:
+        STATE.reset(strategy_name=request.strategy, size=request.size)
+    except CredentialsMissing as error:
+        # A missing credential is a configuration problem with a clear fix, not
+        # an internal error. Say so, with the instructions attached.
+        raise HTTPException(status_code=503, detail=str(error)) from error
     return _snapshot()
 
 

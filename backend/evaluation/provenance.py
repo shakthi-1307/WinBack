@@ -30,9 +30,15 @@ def report(executor: Executor) -> str:
     elif substituted == 0:
         lines.append(f"  gateway calls        {live} of {total} REAL "
                      "(live Razorpay test mode)")
+    elif live == 0:
+        lines.append(f"  gateway calls        {total} via transport double, 0 live")
+        lines.append("                       (measurement run — decision quality does")
+        lines.append("                       not depend on transport. Prove the")
+        lines.append("                       integration with: python -m")
+        lines.append("                       backend.evaluation.live_proof)")
     else:
-        lines.append(f"  gateway calls        {live} real, {substituted} substituted "
-                     "-- TEST DOUBLE IN USE, results are not integration-backed")
+        lines.append(f"  gateway calls        {live} REAL (live Razorpay test mode), "
+                     f"{substituted} via transport double")
 
     lines += [
         "  bank approval        MODELLED by the frozen simulator",

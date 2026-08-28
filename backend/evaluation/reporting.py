@@ -56,4 +56,11 @@ def intelligence_budget(strategy) -> str:
     ]
     if usage.calls:
         lines.append(f"  cost per transaction     Rs {usage.cost_paise / 100 / total:.4f}")
+
+    if getattr(usage, "failures", 0):
+        lines.append(f"  MODEL FAILURES           {usage.failures:>4}"
+                     "   (these decisions fell back to the rule tier)")
+        if getattr(usage, "circuit_open", False):
+            lines.append("  circuit                  OPEN — model calls stopped for this run")
+        lines.append(f"  last error               {usage.last_error}")
     return "\n".join(lines)
