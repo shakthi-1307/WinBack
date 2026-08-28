@@ -326,6 +326,13 @@ A payment fails. The bank returns a reason code.
 
 ---
 
+## Architecture
+
+Full system design, the diagrams, and the five decisions worth defending:
+**[`docs/architecture.md`](docs/architecture.md)**
+
+---
+
 ## Layout
 
 ```
