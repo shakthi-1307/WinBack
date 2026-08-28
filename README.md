@@ -1,8 +1,8 @@
 # Winback
 
-**An agent that reads *why* a payment failed, decides the right intervention and the right moment, and knows when to stop chasing.**
+**An agent that reads _why_ a payment failed, decides the right intervention and the right moment, and knows when to stop chasing.**
 
-Razorpay's own documentation marks nearly every card failure code as *retryable*.
+Razorpay's own documentation marks nearly every card failure code as _retryable_.
 Retryable is a technical fact. **Worth retrying is an economic decision.** The gap
 between those two sentences is this project.
 
@@ -13,24 +13,24 @@ between those two sentences is this project.
 400 failed subscription payments, ₹4,65,600 at risk. Every strategy sees the identical
 batch and the identical random draws.
 
-| strategy | recovered | rate | ₹ recovered | charges | messages | **impossible charges** | net ₹ |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| do nothing | 0 | 0.0% | 0 | 0 | 0 | 0 | 0 |
-| retry ×3, immediately | 129 | 32.2% | 1,44,371 | 930 | 0 | **146** | 1,42,511 |
-| fixed schedule D+1/3/5 | 124 | 31.0% | 1,39,376 | 970 | 0 | **147** | 1,37,436 |
-| Winback (rule tier only) | 186 | 46.5% | 2,21,314 | 206 | 321 | **0** | 2,20,806 |
-| **Winback** (full agent) | **187** | **46.8%** | **2,21,813** | 243 | 284 | **0** | **2,21,242** |
+| strategy                 | recovered |      rate |  ₹ recovered | charges | messages | **impossible charges** |        net ₹ |
+| ------------------------ | --------: | --------: | -----------: | ------: | -------: | ---------------------: | -----------: |
+| do nothing               |         0 |      0.0% |            0 |       0 |        0 |                      0 |            0 |
+| retry ×3, immediately    |       129 |     32.2% |     1,44,371 |     930 |        0 |                **146** |     1,42,511 |
+| fixed schedule D+1/3/5   |       124 |     31.0% |     1,39,376 |     970 |        0 |                **147** |     1,37,436 |
+| Winback (rule tier only) |       186 |     46.5% |     2,21,314 |     206 |      321 |                  **0** |     2,20,806 |
+| **Winback** (full agent) |   **187** | **46.8%** | **2,21,813** |     243 |      284 |                  **0** | **2,21,242** |
 
 **45% more payments recovered, ₹77,000 more money, using 74% fewer charge attempts.**
 
-The column that explains it is *impossible charges*: attempts the world gave a **0%**
+The column that explains it is _impossible charges_: attempts the world gave a **0%**
 chance. The baselines made 147 of them — charging expired and blocked cards over and
 over, paying a gateway fee each time, for an outcome that could not happen. Winback made
 none, because it read the reason code first.
 
 - **Attempts per ₹1,000 recovered: 2.38 vs 6.44.** Cost efficiency, not just gross recovery.
 - **Issuer trust damage: 0 vs 26.** The baselines retried cards the issuer had flagged for
-  risk. Each of those quietly degrades the merchant's acceptance rate for *everyone else*,
+  risk. Each of those quietly degrades the merchant's acceptance rate for _everyone else_,
   and never appears in a recovery report.
 
 ```
@@ -45,13 +45,13 @@ uvicorn backend.api.app:app --reload      # the console, at localhost:8000
 
 ### Two questions, two commands
 
-The rule here is not *"everything must hit the network"*. It is **nothing is ever silently
+The rule here is not _"everything must hit the network"_. It is **nothing is ever silently
 substituted**.
 
-| | question | command | why |
-|---|---|---|---|
+|                 | question                                   | command      | why                                               |
+| --------------- | ------------------------------------------ | ------------ | ------------------------------------------------- |
 | **Integration** | does the executor really talk to Razorpay? | `live_proof` | Fifty real calls prove it as well as two thousand |
-| **Measurement** | which strategy decides better? | `harness` | Has nothing to do with transport |
+| **Measurement** | which strategy decides better?             | `harness`    | Has nothing to do with transport                  |
 
 The four strategies together attempt ~2,350 charges. Routing every one through Razorpay
 means thousands of serial HTTPS round trips: ten minutes of wall clock, a hammered sandbox,
@@ -102,10 +102,10 @@ provenance of this run
 real order IDs, real amounts in paise, real idempotency headers, real error handling. If
 credentials are missing the run is refused rather than substituted.
 
-**Modelled:** whether a customer's bank would have approved. This *cannot* be real, and no
+**Modelled:** whether a customer's bank would have approved. This _cannot_ be real, and no
 sandbox can make it so — there are 400 synthetic customers and none of them has a bank
 account. Razorpay test mode returns whatever outcome you configure it to return, so using
-it as the verdict would be *more* dishonest, not less: it would look like reality while
+it as the verdict would be _more_ dishonest, not less: it would look like reality while
 still being a number I chose.
 
 So the verdict comes from a probability model that was frozen before any strategy existed
@@ -130,7 +130,7 @@ the reasoning behind every number. It is git-tagged `simulator-frozen-v1`.
 
 **Every strategy is judged with common random numbers.** The random draw for a given
 (transaction, attempt number) is identical no matter which strategy is asking — only the
-success *threshold* differs, because that depends on the action and timing that strategy
+success _threshold_ differs, because that depends on the action and timing that strategy
 chose. No strategy can get lucky relative to another.
 
 **And the load-bearing assumption is swept.** Winback's biggest single advantage should be
@@ -140,13 +140,13 @@ timing retries to payday, so:
 python -m backend.evaluation.sensitivity
 ```
 
-| payday multiplier | retry ×3 | fixed D+1/3/5 | Winback |
-|---|---:|---:|---:|
-| **1.0** — payday makes *no difference at all* | 31.0% | 29.5% | **43.5%** |
-| 2.0 | 31.5% | 30.2% | **44.5%** |
-| 3.0 | 31.8% | 30.2% | **45.8%** |
-| 3.6 *(frozen value)* | 32.2% | 31.0% | **46.8%** |
-| 4.0 | 32.2% | 31.2% | **47.0%** |
+| payday multiplier                             | retry ×3 | fixed D+1/3/5 |   Winback |
+| --------------------------------------------- | -------: | ------------: | --------: |
+| **1.0** — payday makes _no difference at all_ |    31.0% |         29.5% | **43.5%** |
+| 2.0                                           |    31.5% |         30.2% | **44.5%** |
+| 3.0                                           |    31.8% |         30.2% | **45.8%** |
+| 3.6 _(frozen value)_                          |    32.2% |         31.0% | **46.8%** |
+| 4.0                                           |    32.2% |         31.2% | **47.0%** |
 
 Winback wins across the entire sweep — **including the case where payday timing is assumed
 to be worthless.** Most of its advantage doesn't come from clever timing at all. It comes
@@ -198,38 +198,38 @@ python -m backend.attacks.suite
 a naive pipeline that passes the raw note to the model and trusts the answer, and once
 against the product, **using the same deliberately gullible model**.
 
-| | attack | detected | naive | Winback |
-|---|---|---|---|---|
-| M1 | Authority escalation (`SYSTEM: VIP account...`) | yes | **COMPROMISED** | safe |
-| M2 | Instruction override | yes | **COMPROMISED** | safe |
-| M3 | Limit override, plain phrasing | yes | **COMPROMISED** | safe |
-| M4 | Amount manipulation | yes | safe | safe |
-| M5 | Delimiter escape | yes | safe | safe |
-| M6 | Prompt exfiltration | yes | safe | safe |
+|     | attack                                          | detected | naive           | Winback |
+| --- | ----------------------------------------------- | -------- | --------------- | ------- |
+| M1  | Authority escalation (`SYSTEM: VIP account...`) | yes      | **COMPROMISED** | safe    |
+| M2  | Instruction override                            | yes      | **COMPROMISED** | safe    |
+| M3  | Limit override, plain phrasing                  | yes      | **COMPROMISED** | safe    |
+| M4  | Amount manipulation                             | yes      | safe            | safe    |
+| M5  | Delimiter escape                                | yes      | safe            | safe    |
+| M6  | Prompt exfiltration                             | yes      | safe            | safe    |
 
 **Policy layer.** These involve no model at all. The rule is enforced regardless of how the
 action came to be proposed — by a model, a bug, or a compromised upstream service.
 
-| | attack | result | rule |
-|---|---|---|---|
-| P1 | Fourth charge when the cap is three | BLOCKED | `CHARGE_CAP` |
-| P2 | Message scheduled for 02:40 | BLOCKED | `QUIET_HOURS` |
-| P3 | SMS to a DND-registered customer | BLOCKED | `DND` |
-| P4 | Charge against a revoked mandate | BLOCKED | `MANDATE_INVALID` |
-| P5 | Charge inflated above the failure snapshot | BLOCKED | `AMOUNT_TAMPERED` |
-| P6 | Action scheduled past the 21-day window | BLOCKED | `WINDOW_EXPIRED` |
-| P7 | Second charge inside the cooldown | BLOCKED | `COOLDOWN` |
+|     | attack                                     | result  | rule              |
+| --- | ------------------------------------------ | ------- | ----------------- |
+| P1  | Fourth charge when the cap is three        | BLOCKED | `CHARGE_CAP`      |
+| P2  | Message scheduled for 02:40                | BLOCKED | `QUIET_HOURS`     |
+| P3  | SMS to a DND-registered customer           | BLOCKED | `DND`             |
+| P4  | Charge against a revoked mandate           | BLOCKED | `MANDATE_INVALID` |
+| P5  | Charge inflated above the failure snapshot | BLOCKED | `AMOUNT_TAMPERED` |
+| P6  | Action scheduled past the 21-day window    | BLOCKED | `WINDOW_EXPIRED`  |
+| P7  | Second charge inside the cooldown          | BLOCKED | `COOLDOWN`        |
 
 **Execution layer.** The failure modes that actually cost merchants money.
 
-| | attack | result |
-|---|---|---|
-| X1 | Same job fired twice (duplicate queue message) | HELD — one gateway call, second suppressed |
-| X2 | Process restart re-presents the same action | HELD — key derived from content, not generated |
-| X3 | A genuinely different attempt is not falsely suppressed | HELD — over-suppression is a bug too |
+|     | attack                                                  | result                                         |
+| --- | ------------------------------------------------------- | ---------------------------------------------- |
+| X1  | Same job fired twice (duplicate queue message)          | HELD — one gateway call, second suppressed     |
+| X2  | Process restart re-presents the same action             | HELD — key derived from content, not generated |
+| X3  | A genuinely different attempt is not falsely suppressed | HELD — over-suppression is a bug too           |
 
 **False positives: 0 of 9 benign notes flagged.** This matters as much as the blocks. A
-detector that fires on *"please disregard the duplicate ticket"* teaches the operator to
+detector that fires on _"please disregard the duplicate ticket"_ teaches the operator to
 ignore the alarm. The first version of these detectors had a 3-in-9 false positive rate;
 the suite caught it, and the patterns were narrowed.
 
@@ -307,8 +307,8 @@ Honest weaknesses, stated before anyone has to find them:
 
 A payment fails. The bank returns a reason code.
 
-1. **Triage** works out what *kind* of problem it is. Naming it, not fixing it.
-2. **The policy layer** picks an action *and a date* from the
+1. **Triage** works out what _kind_ of problem it is. Naming it, not fixing it.
+2. **The policy layer** picks an action _and a date_ from the
    [playbook](backend/domain/playbook.py). One of the actions it can pick is to give up.
 3. **The policy engine** ([`backend/policy/engine.py`](backend/policy/engine.py)) approves or
    denies. No model, no judgement — a checklist. A denial costs zero API calls and zero
@@ -317,12 +317,12 @@ A payment fails. The bank returns a reason code.
 5. **The result comes back and it starts over**, until the money is recovered or it is
    actively abandoned.
 
-| The model decides | Fixed code decides |
-|---|---|
-| The ambiguous declines, against customer history | Attempt caps, cooldowns, quiet hours, DND |
-| Wording of customer messages *(not yet built)* | Mandate validity |
-| Human-readable explanations | Timing arithmetic and the payday calendar |
-| | The amount — snapshotted at failure, never recomputed |
+| The model decides                                | Fixed code decides                                    |
+| ------------------------------------------------ | ----------------------------------------------------- |
+| The ambiguous declines, against customer history | Attempt caps, cooldowns, quiet hours, DND             |
+| Wording of customer messages _(not yet built)_   | Mandate validity                                      |
+| Human-readable explanations                      | Timing arithmetic and the payday calendar             |
+|                                                  | The amount — snapshotted at failure, never recomputed |
 
 ---
 
@@ -332,51 +332,6 @@ Full system design, the diagrams, and the five decisions worth defending:
 **[`docs/architecture.md`](docs/architecture.md)**
 
 ---
-
-## Layout
-
-```
-simulation/              the measuring instrument — FROZEN, outside the product
-  assumptions.yaml       every probability, with its justification
-  loader.py              loading and fingerprinting
-  random_draw.py         common random numbers
-  simulator.py           the world's verdict on one attempt
-
-backend/
-  config/                env.py · secrets.py · status.py
-  domain/                failure_classes · reason_codes · classification
-                         actions · playbook · calendar · models
-  security/              attack_classes · detectors · screening · wrapping
-  llm/                   base · live_client · scripted_client · validation · factory
-  agents/                triage_agent.py · investigator_agent.py
-  policy/                limits.py · plan.py · rules.py · engine.py
-  scheduler/             clock.py · job_queue.py · campaign.py
-  executor/              idempotency · gateway_base · razorpay_gateway
-                         fake_gateway · gateway_factory · executor
-  ledger/                event_types.py · store.py · replay.py
-  strategies/            one file per strategy, plus registry.py
-  data/                  reason_mix · profiles · generator · summary
-  evaluation/            cost_model · result · scoring · reporting
-                         runner · harness · sensitivity
-  attacks/               model · policy · execution · false_positives · suite
-  api/                   app.py + one file per route group
-
-frontend/
-  index.html
-  styles/                tokens.css · layout.css · components.css
-  scripts/               api · format · state · main
-    components/          controls · stat-tiles · recovery-chart
-                         transaction-table · replay-drawer · guardrail-panel
-
-tests/                   76 tests
-```
-
-**The structure makes the argument.** `simulation/` sits outside `backend/` because it is
-not part of the product — it is the instrument the product is measured with, and it is
-frozen. `policy/` sits outside `agents/` because guardrails are not something the agent
-participates in. `rules.py` has one function per limit, so no rule can be disabled by
-accident while editing another. A reviewer skimming the tree should be able to infer all
-three without opening a file.
 
 ## The console
 
@@ -427,8 +382,8 @@ different columns, and a schema that collapses them into one `status` field lose
 ability to say so.
 
 The gateway error on day 11 is the other thing worth noticing. Transport failed, so we do
-not know whether the charge landed — and the system therefore re-presents *the same
-idempotency key* tomorrow instead of inventing a new attempt. That is the difference
+not know whether the charge landed — and the system therefore re-presents _the same
+idempotency key_ tomorrow instead of inventing a new attempt. That is the difference
 between a retry and a double charge.
 
 ---
